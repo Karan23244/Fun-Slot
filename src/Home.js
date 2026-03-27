@@ -30,46 +30,120 @@ function Home() {
   const handleModalClose = useCallback(() => {
     setModalOpen(false);
   }, []);
-
+  // Add this helper at the top
+  const isMobileDevice = () => {
+    return (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      ) ||
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0
+    );
+  };
   // Track page view
   useEffect(() => {
     console.log("[Analytics] Page view recorded");
   }, []);
+  // useEffect(() => {
+  //   const checkBot = async () => {
+  //     const checks = {
+  //       userAgent: navigator.userAgent,
+  //       webdriver: navigator.webdriver,
+  //       pluginsLength: navigator.plugins.length,
+  //       languages: navigator.languages,
+  //     };
+
+  //     const behavior = {
+  //       movedMouse: false,
+  //       scrolled: false,
+  //     };
+
+  //     const onMouseMove = () => {
+  //       console.log("Mouse moved");
+  //       behavior.movedMouse = true;
+  //     };
+
+  //     const onScroll = () => {
+  //       console.log("Scrolled");
+  //       behavior.scrolled = true;
+  //     };
+
+  //     document.addEventListener("mousemove", onMouseMove);
+  //     document.addEventListener("scroll", onScroll);
+
+  //     console.log("Waiting 3 seconds to detect behavior...");
+  //     await new Promise((res) => setTimeout(res, 3000));
+
+  //     document.removeEventListener("mousemove", onMouseMove);
+  //     document.removeEventListener("scroll", onScroll);
+
+  //     console.log("Sending bot check request with:", { checks, behavior });
+  //     //const response = await fetch("http://localhost:5000/check-bot", {
+
+  //     const res = await fetch(`${apiUrl}/check-bot`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ checks, behavior }),
+  //     });
+
+  //     const data = await res.json();
+  //     console.log("Received bot check response:", data);
+
+  //     if (data.isBot) {
+  //       if (data.isGoogleBot) {
+  //         console.log("✅ Googlebot detected");
+  //       }
+
+  //       // 👉 Bot → show normal page
+  //       setIsBot(true);
+  //     } else {
+  //       console.log("🎉 Real user detected");
+
+  //       // 👉 Real user → show 18+ popup
+  //       setIsBot(false);
+  //       setShowAgePopup(true);
+  //     }
+  //   };
+
+  //   checkBot();
+  // }, []);
   useEffect(() => {
     const checkBot = async () => {
+      const mobile = isMobileDevice();
+
       const checks = {
         userAgent: navigator.userAgent,
         webdriver: navigator.webdriver,
         pluginsLength: navigator.plugins.length,
         languages: navigator.languages,
+        isMobile: mobile, // ✅ send this to backend
       };
 
       const behavior = {
         movedMouse: false,
         scrolled: false,
+        tapped: false, // ✅ track touch too
       };
 
       const onMouseMove = () => {
-        console.log("Mouse moved");
         behavior.movedMouse = true;
       };
-
       const onScroll = () => {
-        console.log("Scrolled");
         behavior.scrolled = true;
       };
+      const onTouchStart = () => {
+        behavior.tapped = true;
+      }; // ✅ mobile tap
 
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("scroll", onScroll);
+      document.addEventListener("touchstart", onTouchStart); // ✅
 
-      console.log("Waiting 3 seconds to detect behavior...");
       await new Promise((res) => setTimeout(res, 3000));
 
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("scroll", onScroll);
-
-      console.log("Sending bot check request with:", { checks, behavior });
-      //const response = await fetch("http://localhost:5000/check-bot", {
+      document.removeEventListener("touchstart", onTouchStart); // ✅
 
       const res = await fetch(`${apiUrl}/check-bot`, {
         method: "POST",
@@ -78,19 +152,10 @@ function Home() {
       });
 
       const data = await res.json();
-      console.log("Received bot check response:", data);
 
       if (data.isBot) {
-        if (data.isGoogleBot) {
-          console.log("✅ Googlebot detected");
-        }
-
-        // 👉 Bot → show normal page
         setIsBot(true);
       } else {
-        console.log("🎉 Real user detected");
-
-        // 👉 Real user → show 18+ popup
         setIsBot(false);
         setShowAgePopup(true);
       }
@@ -98,7 +163,6 @@ function Home() {
 
     checkBot();
   }, []);
-
   const checkBot = async () => {
     const fingerprint = await getFingerprint();
 
