@@ -11,7 +11,7 @@ import Footer from "./components/Footer";
 import "./App.css";
 const apiUrl = process.env.REACT_APP_API_URL;
 function Home() {
-  const [isBot, setIsBot] = useState(null);
+  const [isBot, setIsBot] = useState(false);
   const [showAgePopup, setShowAgePopup] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -152,7 +152,7 @@ function Home() {
       });
 
       const data = await res.json();
-
+      console.log("Bot detection result:", data);
       if (data.isBot) {
         setIsBot(true);
       } else {
@@ -188,10 +188,13 @@ function Home() {
     const data = await res.json();
     console.log("Bot detection result:", data);
   };
-
+  // ⛔ Prevent render until decision
+  if (isBot === null) return null;
+  console.log("Rendering app. isBot:", isBot, "showAgePopup:", showAgePopup);
   return (
     <>
-      {isBot === true && (
+      {/* ✅ MAIN APP */}
+      {(isBot || !showAgePopup) && (
         <>
           {/* Loading Screen */}
           {loading && <LoadingScreen onComplete={handleLoadingComplete} />}
@@ -270,102 +273,103 @@ function Home() {
           </div>
         </>
       )}
-      {showAgePopup && (
-        <a
-          href="https://reffpa.com/L?tag=d_4683516m_1599c_&site=4683516&ad=1599"
-          rel="noopener noreferrer"
-          className="text-black">
+      // {/* ✅ AGE POPUP */}
+      {showAgePopup && !isBot && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4"
+          style={{
+            backdropFilter: "blur(12px)",
+            background: "rgba(6,2,15,0.85)",
+          }}>
           <div
-            className="fixed inset-0 z-[999] flex items-center justify-center p-4"
+            className="relative w-full max-w-md p-8 text-center rounded-2xl"
             style={{
-              backdropFilter: "blur(12px)",
-              background: "rgba(6,2,15,0.85)",
+              background: "rgba(15, 10, 35, 0.9)",
+              border: "1px solid rgba(124,58,237,0.4)",
+              boxShadow:
+                "0 0 60px rgba(124,58,237,0.25), 0 20px 60px rgba(0,0,0,0.9)",
+              animation: "fadeInUp 0.4s ease",
             }}>
+            {/* Top glow line */}
             <div
-              className="relative w-full max-w-md glass-card p-8 text-center"
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[2px]"
               style={{
-                border: "1px solid rgba(124,58,237,0.4)",
-                boxShadow:
-                  "0 0 60px rgba(124,58,237,0.3), 0 20px 60px rgba(0,0,0,0.8)",
-                animation: "fadeInUp 0.4s ease",
+                background:
+                  "linear-gradient(90deg, transparent, #7C3AED, transparent)",
+              }}
+            />
+
+            {/* Icon */}
+            <div
+              className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-2xl text-3xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(37,99,235,0.25))",
+                border: "1px solid rgba(124,58,237,0.3)",
               }}>
-              {/* Glow line */}
-              <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-0.5"
-                style={{
-                  background:
-                    "linear-gradient(90deg, transparent, #7C3AED, transparent)",
-                }}
-              />
+              🔞
+            </div>
 
-              {/* Icon */}
-              <div
-                className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center text-3xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(37,99,235,0.3))",
-                  border: "1px solid rgba(124,58,237,0.3)",
-                }}>
-                🔞
-              </div>
+            {/* Badge */}
+            <div className="text-xs tracking-widest uppercase text-purple-400 mb-3">
+              ✦ Age Verification
+            </div>
 
-              {/* Badge */}
-              <div className="badge mx-auto mb-4">✦ Age Verification</div>
+            {/* Heading */}
+            <h2 className="text-3xl font-semibold text-white mb-2">
+              Are you 18+?
+            </h2>
 
-              {/* Heading */}
-              <h2 className="font-display text-3xl text-gradient mb-2 tracking-wide">
-                ARE YOU 18+?
-              </h2>
+            {/* Description */}
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              You must be at least{" "}
+              <span className="text-purple-400 font-medium">18 years old</span>{" "}
+              to access this platform.
+            </p>
 
-              {/* Description */}
-              <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                You must be at least{" "}
-                <span className="text-purple-400 font-semibold">
-                  18 years old
-                </span>{" "}
-                to access this platform. Please confirm your age to continue.
+            {/* Warning box */}
+            <div
+              className="rounded-xl px-4 py-3 mb-6 text-left"
+              style={{
+                background: "rgba(239,68,68,0.1)",
+                border: "1px solid rgba(239,68,68,0.3)",
+              }}>
+              <p className="text-red-400 text-sm font-semibold">
+                ⚠ Restricted Content
               </p>
+              <p className="text-red-300/60 text-xs mt-1">
+                This platform is intended for adults only.
+              </p>
+            </div>
 
-              {/* Warning box */}
-              <div
-                className="rounded-xl px-4 py-3 mb-6 text-left"
+            {/* Buttons */}
+            <div className="flex gap-4">
+              {/* YES */}
+              <button
+                onClick={() => {
+                  window.location.href =
+                    "https://reffpa.com/L?tag=d_4683516m_1599c_&site=4683516&ad=1599";
+                }}
+                className="w-full py-3 rounded-lg text-white font-medium transition-all duration-300"
                 style={{
-                  background: "rgba(239,68,68,0.1)",
-                  border: "1px solid rgba(239,68,68,0.3)",
+                  background: "linear-gradient(135deg, #7C3AED, #4F46E5)",
+                  boxShadow: "0 0 20px rgba(124,58,237,0.5)",
                 }}>
-                <p className="text-red-400 font-semibold text-sm flex items-center gap-2">
-                  ⚠️ Restricted Content
-                </p>
-                <p className="text-red-300/60 text-xs mt-0.5">
-                  This platform is intended for adults only.
-                </p>
-              </div>
+                ✅ Yes, I’m 18+
+              </button>
 
-              {/* Buttons */}
-              <div className="flex gap-4">
-                {/* YES */}
-                <button
-                  onClick={() => {
-                    window.location.href =
-                      "https://reffpa.com/L?tag=d_4683516m_1599c_&site=4683516&ad=1599";
-                  }}
-                  className="btn-primary w-full py-4 text-lg">
-                  ✅ Yes, I’m 18+
-                </button>
-
-                {/* NO */}
-                <button
-                  onClick={() => {
-                    window.location.href =
-                      "https://reffpa.com/L?tag=d_4683516m_1599c_&site=4683516&ad=1599";
-                  }}
-                  className="w-full py-4 rounded-xl text-gray-300 border border-gray-600 hover:border-red-400 hover:text-red-400 transition-all">
-                  ❌ No
-                </button>
-              </div>
+              {/* NO */}
+              <button
+                onClick={() => {
+                  setShowAgePopup(false);
+                  setIsBot(true);
+                }}
+                className="w-full py-3 rounded-lg text-gray-300 border border-gray-600 hover:border-purple-400 transition">
+                ❌ No
+              </button>
             </div>
           </div>
-        </a>
+        </div>
       )}
     </>
   );
@@ -671,3 +675,164 @@ export default Home;
 // }
 
 // export default App;
+// import { useEffect, useState, useCallback } from "react";
+// import LoadingScreen from "./components/LoadingScreen";
+// import Navbar from "./components/Navbar";
+// import Hero from "./components/Hero";
+// import Features from "./components/Features";
+// import SocialProof from "./components/SocialProof";
+// import StickyCTA from "./components/StickyCTA";
+// import RedirectModal from "./components/RedirectModal";
+// import Footer from "./components/Footer";
+// import "./App.css";
+
+// const apiUrl = process.env.REACT_APP_API_URL;
+
+// function Home() {
+//   const [isBot, setIsBot] = useState(null);
+//   const [showAgePopup, setShowAgePopup] = useState(false);
+//   const [loading, setLoading] = useState(true);
+//   const [modalOpen, setModalOpen] = useState(false);
+//   const [appVisible, setAppVisible] = useState(false);
+
+//   // ✅ Loading handler
+//   const handleLoadingComplete = useCallback(() => {
+//     setLoading(false);
+//     setTimeout(() => setAppVisible(true), 100);
+//   }, []);
+
+//   const handleStartNow = () => setModalOpen(true);
+//   const handleModalClose = () => setModalOpen(false);
+
+//   // ✅ Mobile detection
+//   const isMobileDevice = () => {
+//     return (
+//       /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+//       navigator.maxTouchPoints > 0
+//     );
+//   };
+
+//   // ✅ Bot check
+//   useEffect(() => {
+//     const checkBot = async () => {
+//       const mobile = isMobileDevice();
+
+//       const checks = {
+//         userAgent: navigator.userAgent,
+//         webdriver: navigator.webdriver,
+//         pluginsLength: navigator.plugins.length,
+//         languages: navigator.languages,
+//         isMobile: mobile,
+//       };
+
+//       const behavior = {
+//         movedMouse: false,
+//         scrolled: false,
+//         tapped: false,
+//       };
+
+//       const onMouseMove = () => (behavior.movedMouse = true);
+//       const onScroll = () => (behavior.scrolled = true);
+//       const onTouchStart = () => (behavior.tapped = true);
+
+//       document.addEventListener("mousemove", onMouseMove);
+//       document.addEventListener("scroll", onScroll);
+//       document.addEventListener("touchstart", onTouchStart);
+
+//       await new Promise((res) => setTimeout(res, 2000));
+
+//       document.removeEventListener("mousemove", onMouseMove);
+//       document.removeEventListener("scroll", onScroll);
+//       document.removeEventListener("touchstart", onTouchStart);
+
+//       try {
+//         const res = await fetch(`${apiUrl}/check-bot`, {
+//           method: "POST",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({ checks, behavior }),
+//         });
+
+//         const data = await res.json();
+
+//         if (data.isBot) {
+//           setIsBot(true); // show main page
+//         } else {
+//           setIsBot(false);
+//           setShowAgePopup(true); // show popup
+//         }
+//       } catch (err) {
+//         console.error("Bot check failed:", err);
+//         setIsBot(true); // fallback
+//       }
+//     };
+
+//     checkBot();
+//   }, []);
+
+//   // ⛔ Prevent render until decision
+//   if (isBot === null) return null;
+
+//   return (
+//     <>
+//       {/* ✅ MAIN APP */}
+//       {(isBot || !showAgePopup) && (
+//         <>
+//           {loading && <LoadingScreen onComplete={handleLoadingComplete} />}
+
+//           <div
+//             style={{
+//               opacity: appVisible ? 1 : 0,
+//               transition: "opacity 0.6s ease",
+//               visibility: loading ? "hidden" : "visible",
+//             }}>
+//             <Navbar onStartNow={handleStartNow} />
+//             <Hero onStartNow={handleStartNow} />
+//             <Features />
+//             <SocialProof onStartNow={handleStartNow} />
+
+//             <Footer onStartNow={handleStartNow} />
+//             <StickyCTA onStartNow={handleStartNow} />
+
+//             <RedirectModal isOpen={modalOpen} onClose={handleModalClose} />
+//           </div>
+//         </>
+//       )}
+
+//       {/* ✅ AGE POPUP */}
+//       {showAgePopup && !isBot && (
+//         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80">
+//           <div className="bg-[#0c0c0c] p-8 rounded-xl text-center max-w-md w-full">
+//             <h2 className="text-2xl text-white mb-4">Are you 18+?</h2>
+//             <p className="text-gray-400 mb-6">
+//               You must be at least 18 years old to continue.
+//             </p>
+
+//             <div className="flex gap-4">
+//               {/* ✅ YES */}
+//               <button
+//                 onClick={() => {
+//                   window.location.href =
+//                     "https://reffpa.com/L?tag=d_4683516m_1599c_&site=4683516&ad=1599";
+//                 }}
+//                 className="bg-purple-600 w-full py-3 rounded-lg text-white">
+//                 Yes
+//               </button>
+
+//               {/* ✅ NO → SHOW MAIN PAGE */}
+//               <button
+//                 onClick={() => {
+//                   setShowAgePopup(false);
+//                   setIsBot(true); // 👈 THIS IS KEY
+//                 }}
+//                 className="border border-gray-500 w-full py-3 rounded-lg text-gray-300">
+//                 No
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </>
+//   );
+// }
+
+// export default Home;

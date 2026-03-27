@@ -88,6 +88,6 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-app.listen(4000, "0.0.0.0", () => {
+app.listen(4003, "0.0.0.0", () => {
   console.log("✅ Server running");
 });
