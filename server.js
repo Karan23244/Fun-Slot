@@ -1,7 +1,5 @@
-const express = require("express");
-const path = require("path");
-const cors = require("cors");
-const rateLimit = require("express-rate-limit");
+import express from "express";
+import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mysql from "mysql2/promise";
@@ -9,88 +7,25 @@ import he from "he";
 import cron from "node-cron";
 import https from "https";
 const app = express();
-const JWT_SECRET = "supersecret";
-// ✅ Allow requests from your frontend
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://192.168.1.38:3000",
-      "https://funslot.online",
-      "https://admin.funslot.online",
-    ],
-    credentials: true,
-  }),
-);
+const PORT = 5252;
+const JWT_SECRET = "supersecret"; // change in production
 
+//  ^|^e Middleware
+//app.use(cors({ origin: "https://funslot.online", credentials: true }));
+//  ^|^e Enable CORS for all origins (change if needed)
+app.use(cors({
+  origin: [
+    "https://funslot.online",
+    "https://admin.funslot.online",
+    "http://localhost:5173"
+  ],
+  methods: "GET,POST,PUT,DELETE",
+  credentials: true
+}));
+
+//  ^}^l REMOVE THIS LINE
+// app.options("*", cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "build")));
-
-// ➕ Rate limiter for bot check
-const botLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // limit each IP to 20 requests per windowMs
-  message: "Too many requests from this IP. Try again later.",
-});
-app.use("/check-bot", botLimiter);
-
-// app.post("/check-bot", (req, res) => {
-//   const { checks, behavior, fingerprint } = req.body;
-//   console.log("🔍 Received bot detection request");
-
-//   let score = 0;
-//   const suspiciousUA = [/bot/i, /HeadlessChrome/i];
-
-//   // ✅ Explicit check for Googlebot
-//   const isGoogleBot = /Googlebot/i.test(checks.userAgent);
-
-//   console.log(`[${new Date().toISOString()}] IP: ${req.ip} | Fingerprint: ${fingerprint}`);
-//   console.log("User-Agent:", checks.userAgent);
-
-//   // Only run heuristics if it's not Googlebot
-//   if (!isGoogleBot) {
-//     if (checks.webdriver) score += 2;
-//     if (checks.pluginsLength === 0) score += 1;
-//     if (!checks.languages || checks.languages.length === 0) score += 1;
-//     if (!behavior.movedMouse) score += 2;
-//     if (!behavior.scrolled) score += 2;
-//     if (suspiciousUA.some((regex) => regex.test(checks.userAgent))) score += 3;
-//   }
-
-//   const isBot = isGoogleBot || score >= 4;
-//   console.log("Score:", score, "| isBot:", isBot);
-
-//   res.json({ isBot, isGoogleBot });
-// });
-app.post("/check-bot", (req, res) => {
-  const { checks, behavior } = req.body;
-
-  let score = 0;
-  const suspiciousUA = [/bot/i, /HeadlessChrome/i];
-  const isGoogleBot = /Googlebot/i.test(checks.userAgent);
-  const isMobile = checks.isMobile === true; // ✅ read mobile flag
-
-  if (!isGoogleBot) {
-    if (checks.webdriver) score += 2;
-    if (checks.pluginsLength === 0) score += 1;
-    if (!checks.languages || checks.languages.length === 0) score += 1;
-    if (suspiciousUA.some((regex) => regex.test(checks.userAgent))) score += 3;
-
-    // ✅ Only penalize mouse/scroll on desktop
-    if (!isMobile) {
-      if (!behavior.movedMouse) score += 2;
-      if (!behavior.scrolled) score += 2;
-    } else {
-      // On mobile, reward a tap as human signal (optional)
-      if (!behavior.tapped && !behavior.scrolled) score += 1; // light penalty only
-    }
-  }
-
-  const isBot = isGoogleBot || score >= 4;
-  console.log(`Score: ${score} | isMobile: ${isMobile} | isBot: ${isBot}`);
-
-  res.json({ isBot, isGoogleBot });
-});
 
 //  ^|^e Database connection wrapper
 let db;
@@ -119,13 +54,9 @@ app.post("/api/loginigaming", async (req, res) => {
   if (!db) return res.status(500).json({ message: "Database not connected" });
   try {
     const { username, password } = req.body;
-    const [users] = await db.query(
-      "SELECT * FROM admin_users WHERE username = ?",
-      [username],
-    );
+    const [users] = await db.query("SELECT * FROM admin_users WHERE username = ?", [username]);
 
-    if (users.length === 0)
-      return res.status(401).json({ message: "Invalid username" });
+    if (users.length === 0) return res.status(401).json({ message: "Invalid username" });
 
     const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -156,9 +87,7 @@ const auth = (req, res, next) => {
 app.get("/api/campaign-status", async (req, res) => {
   if (!db) return res.status(500).json({ message: "Database not connected" });
   try {
-    const [rows] = await db.query(
-      "SELECT is_live FROM campaign_status WHERE id = 1",
-    );
+    const [rows] = await db.query("SELECT is_live FROM campaign_status WHERE id = 1");
     res.json({ live: rows[0]?.is_live });
   } catch (err) {
     console.error(err);
@@ -171,16 +100,14 @@ app.post("/api/toggle-campaign", auth, async (req, res) => {
   if (!db) return res.status(500).json({ message: "Database not connected" });
   try {
     const { is_live } = req.body;
-    await db.query("UPDATE campaign_status SET is_live=? WHERE id=1", [
-      is_live,
-    ]);
+    await db.query("UPDATE campaign_status SET is_live=? WHERE id=1", [is_live]);
     res.json({ message: "Campaign status updated", live: is_live });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Database error" });
   }
 });
-//igaming api code
+//igaming api code 
 
 // SSL Agent
 const agent = new https.Agent({
@@ -216,7 +143,7 @@ async function fetchAndStoreCampaigns() {
   try {
     const response = await axios.get(
       "https://api.clickorbits.in/v2/publisher/campaigns?apiKey=68c17ce546730d177aad86c703c68c17ce54677d",
-      { httpsAgent: agent },
+      { httpsAgent: agent }
     );
 
     const campaigns = response.data?.data?.campaigns || [];
@@ -233,7 +160,7 @@ async function fetchAndStoreCampaigns() {
       await db.query(
         `REPLACE INTO campaigns (id, title, description, currency, model, tracking_link, preview_url, bonus)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
+                 [
           c.id,
           c.title,
           decodedDescription,
@@ -242,7 +169,7 @@ async function fetchAndStoreCampaigns() {
           c.tracking_link,
           c.preview_url || "",
           bonus,
-        ],
+        ]
       );
     }
 
@@ -276,12 +203,10 @@ cron.schedule("*/15 * * * *", fetchAndStoreCampaigns);
 
 // Initial fetch on server start
 fetchAndStoreCampaigns();
-// Fallback route for SPA
-app.get("*", (req, res) => {
-  console.log("Serving React app...");
-  res.sendFile(path.join(__dirname, "build", "index.html"));
-});
 
-app.listen(4003, "0.0.0.0", () => {
-  console.log("✅ Server running");
+
+//  ^|^e Start Server
+app.listen(PORT, () => {
+  console.log(` ^|^e Server running on http://localhost:${PORT}`);
+  initDB(); // Connect to DB after server starts
 });
