@@ -16,7 +16,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [appVisible, setAppVisible] = useState(false);
-
+  const [showPopup, setShowPopup] = useState(false);
   const handleLoadingComplete = useCallback(() => {
     setLoading(false);
     // Small delay to let loading screen fade out, then fade in app
@@ -46,39 +46,41 @@ function Home() {
   }, []);
   // useEffect(() => {
   //   const checkBot = async () => {
+  //     const mobile = isMobileDevice();
+
   //     const checks = {
   //       userAgent: navigator.userAgent,
   //       webdriver: navigator.webdriver,
   //       pluginsLength: navigator.plugins.length,
   //       languages: navigator.languages,
+  //       isMobile: mobile, // ✅ send this to backend
   //     };
 
   //     const behavior = {
   //       movedMouse: false,
   //       scrolled: false,
+  //       tapped: false, // ✅ track touch too
   //     };
 
   //     const onMouseMove = () => {
-  //       console.log("Mouse moved");
   //       behavior.movedMouse = true;
   //     };
-
   //     const onScroll = () => {
-  //       console.log("Scrolled");
   //       behavior.scrolled = true;
   //     };
+  //     const onTouchStart = () => {
+  //       behavior.tapped = true;
+  //     }; // ✅ mobile tap
 
   //     document.addEventListener("mousemove", onMouseMove);
   //     document.addEventListener("scroll", onScroll);
+  //     document.addEventListener("touchstart", onTouchStart); // ✅
 
-  //     console.log("Waiting 3 seconds to detect behavior...");
   //     await new Promise((res) => setTimeout(res, 3000));
 
   //     document.removeEventListener("mousemove", onMouseMove);
   //     document.removeEventListener("scroll", onScroll);
-
-  //     console.log("Sending bot check request with:", { checks, behavior });
-  //     //const response = await fetch("http://localhost:5000/check-bot", {
+  //     document.removeEventListener("touchstart", onTouchStart); // ✅
 
   //     const res = await fetch(`${apiUrl}/check-bot`, {
   //       method: "POST",
@@ -87,19 +89,10 @@ function Home() {
   //     });
 
   //     const data = await res.json();
-  //     console.log("Received bot check response:", data);
-
+  //     console.log("Bot detection result:", data);
   //     if (data.isBot) {
-  //       if (data.isGoogleBot) {
-  //         console.log("✅ Googlebot detected");
-  //       }
-
-  //       // 👉 Bot → show normal page
   //       setIsBot(true);
   //     } else {
-  //       console.log("🎉 Real user detected");
-
-  //       // 👉 Real user → show 18+ popup
   //       setIsBot(false);
   //       setShowAgePopup(true);
   //     }
@@ -108,60 +101,83 @@ function Home() {
   //   checkBot();
   // }, []);
   useEffect(() => {
-    const checkBot = async () => {
-      const mobile = isMobileDevice();
+    const initFlow = async () => {
+      try {
+        // ✅ STEP 1: Check campaign status FIRST
+        const campaignRes = await fetch(
+          `${apiUrl}/api/campaign-status`,
+        );
+        const campaignData = await campaignRes.json();
 
-      const checks = {
-        userAgent: navigator.userAgent,
-        webdriver: navigator.webdriver,
-        pluginsLength: navigator.plugins.length,
-        languages: navigator.languages,
-        isMobile: mobile, // ✅ send this to backend
-      };
+        console.log("Campaign status:", campaignData);
 
-      const behavior = {
-        movedMouse: false,
-        scrolled: false,
-        tapped: false, // ✅ track touch too
-      };
+        // ❌ If campaign OFF → never show popup
+        if (!campaignData.live) {
+          setShowPopup(false);
+          setShowAgePopup(false);
+          setIsBot(true); // treat like bypass
+          return;
+        }
 
-      const onMouseMove = () => {
-        behavior.movedMouse = true;
-      };
-      const onScroll = () => {
-        behavior.scrolled = true;
-      };
-      const onTouchStart = () => {
-        behavior.tapped = true;
-      }; // ✅ mobile tap
+        // ✅ Campaign is ON → proceed with bot detection
+        setShowPopup(true);
 
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("scroll", onScroll);
-      document.addEventListener("touchstart", onTouchStart); // ✅
+        const mobile = isMobileDevice();
 
-      await new Promise((res) => setTimeout(res, 3000));
+        const checks = {
+          userAgent: navigator.userAgent,
+          webdriver: navigator.webdriver,
+          pluginsLength: navigator.plugins.length,
+          languages: navigator.languages,
+          isMobile: mobile,
+        };
 
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("scroll", onScroll);
-      document.removeEventListener("touchstart", onTouchStart); // ✅
+        const behavior = {
+          movedMouse: false,
+          scrolled: false,
+          tapped: false,
+        };
 
-      const res = await fetch(`${apiUrl}/check-bot`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ checks, behavior }),
-      });
+        const onMouseMove = () => (behavior.movedMouse = true);
+        const onScroll = () => (behavior.scrolled = true);
+        const onTouchStart = () => (behavior.tapped = true);
 
-      const data = await res.json();
-      console.log("Bot detection result:", data);
-      if (data.isBot) {
-        setIsBot(true);
-      } else {
-        setIsBot(false);
-        setShowAgePopup(true);
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("scroll", onScroll);
+        document.addEventListener("touchstart", onTouchStart);
+
+        await new Promise((res) => setTimeout(res, 3000));
+
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("scroll", onScroll);
+        document.removeEventListener("touchstart", onTouchStart);
+
+        // ✅ STEP 2: Bot check
+        const res = await fetch(`${apiUrl}/check-bot`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checks, behavior }),
+        });
+
+        const data = await res.json();
+        console.log("Bot detection result:", data);
+
+        if (data.isBot) {
+          // ❌ Bot → no popup
+          setIsBot(true);
+          setShowAgePopup(false);
+        } else {
+          // ✅ Real user + campaign ON → show popup
+          setIsBot(false);
+          setShowAgePopup(true);
+        }
+      } catch (error) {
+        console.error("Error in init flow:", error);
+        setIsBot(true); // safe fallback
       }
     };
 
-    checkBot();
+    initFlow();
   }, []);
   const checkBot = async () => {
     const fingerprint = await getFingerprint();
@@ -190,6 +206,7 @@ function Home() {
   };
   // ⛔ Prevent render until decision
   if (isBot === null) return null;
+
   console.log("Rendering app. isBot:", isBot, "showAgePopup:", showAgePopup);
   return (
     <>
