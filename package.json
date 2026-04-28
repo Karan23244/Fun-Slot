@@ -17,6 +17,7 @@
     "lucide-react": "^0.544.0",
     "mysql2": "^3.20.0",
     "node-cron": "^4.2.1",
+    "paper": "^0.12.18",
     "puppeteer": "^24.7.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

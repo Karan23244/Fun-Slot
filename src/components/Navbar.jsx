@@ -219,7 +219,7 @@ const Navbar = ({ onStartNow }) => {
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <img src="/logo.svg" alt="1XBET" className="h-4 sm:h-5 md:h-6" />
+            <img src="/betandyou.png" alt="betandyou" className="h-4 sm:h-5 md:h-6" />
           </div>
 
           {/* Desktop links */}

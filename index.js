@@ -32,7 +32,6 @@ app.use(express.json());
 
 // ================= DB =================
 // ================= DB (FIXED) =================
-const mysql = require("mysql2/promise");
 
 const db = mysql.createPool({
   host: "160.153.172.237",
@@ -244,7 +243,6 @@ app.use((req, res) => {
 app.listen(PORT, "0.0.0.0", async () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
-  await initDB();
   await initCampaignTable();
   await fetchAndStoreCampaigns();
 });

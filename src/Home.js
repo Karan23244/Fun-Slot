@@ -389,7 +389,7 @@ function Home() {
         // ✅ STEP 1: Check campaign status FIRST
         const campaignRes = await fetch(`${apiUrl}/api/campaign-status`);
         const campaignData = await campaignRes.json();
-
+        console.log("Campaign status data:", campaignData);
         setIsCampaignLive(campaignData.live); // ✅ store status
         // ✅ Always allow popup
         setShowPopup(true);
@@ -643,7 +643,7 @@ function Home() {
                   if (isCampaignLive) {
                     // ✅ redirect allowed
                     window.location.href =
-                      "https://reffpa.com/L?tag=d_5435880m_1236c_&site=5435880&ad=1236&r=/bonus/casino/landing-1x-wheel-of-fortune";
+                      "https://refpa19084.pro/L?tag=d_4575698m_15787c_pankaj&site=4575698&ad=15787";
                   } else {
                     // ❌ campaign OFF → stay on home
                     setShowAgePopup(false);
