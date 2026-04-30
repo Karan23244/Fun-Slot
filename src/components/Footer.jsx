@@ -19,7 +19,7 @@ const Footer = ({ onStartNow }) => {
           <div className="max-w-xs">
             <div className="flex items-center gap-2 mb-3">
               <img
-                src="/logo.svg"
+                src="/betandyou.png"
                 alt="1XBET"
                 className="h-5 hidden sm:block"
               />
