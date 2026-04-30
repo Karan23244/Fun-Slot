@@ -347,6 +347,7 @@ import StickyCTA from "./components/StickyCTA";
 import RedirectModal from "./components/RedirectModal";
 import Footer from "./components/Footer";
 import "./App.css";
+import SlotMachine from "./components/SlotMachine";
 const apiUrl = process.env.REACT_APP_API_URL;
 function Home() {
   const [isBot, setIsBot] = useState(false);
@@ -501,6 +502,7 @@ function Home() {
             }}>
             <Navbar onStartNow={handleStartNow} />
             <Hero onStartNow={handleStartNow} />
+            <SlotMachine/>
             <Features />
             <SocialProof onStartNow={handleStartNow} />
             <section className="w-full bg-[#06020F] border-t border-purple-900/30 py-10 px-4 sm:px-6 lg:px-8">
